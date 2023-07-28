@@ -1,4 +1,4 @@
-const Joi = require("joi");
+const Joi = require('joi');
 
 const SongPayloadSchema = Joi.object({
   title: Joi.string().required(),

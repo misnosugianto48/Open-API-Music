@@ -1,12 +1,12 @@
-require("dotenv").config();
+require('dotenv').config();
 
-const Hapi = require("@hapi/hapi");
-const albums = require("./api/albums");
-const songs = require("./api/songs");
-const AlbumsService = require("./services/postgres/AlbumsService");
-const AlbumsValidator = require("./validator/albums");
-const SongsValidator = require("./validator/songs");
-const SongsService = require("./services/postgres/SongsService");
+const Hapi = require('@hapi/hapi');
+const albums = require('./api/albums');
+const songs = require('./api/songs');
+const AlbumsService = require('./services/postgres/AlbumsService');
+const AlbumsValidator = require('./validator/albums');
+const SongsValidator = require('./validator/songs');
+const SongsService = require('./services/postgres/SongsService');
 
 const init = async () => {
   const albumsService = new AlbumsService();
@@ -16,7 +16,7 @@ const init = async () => {
     host: process.env.HOST,
     routes: {
       cors: {
-        origin: ["*"],
+        origin: ['*'],
       },
     },
   });
