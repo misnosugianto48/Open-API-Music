@@ -1,4 +1,4 @@
-const Joi = require("joi");
+const Joi = require('joi');
 
 const AlbumPayloadSchema = Joi.object({
   name: Joi.string().required(),
