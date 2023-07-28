@@ -1,7 +1,7 @@
 const mapDBAlbumToModel = ({ id, name, year }) => ({
   id,
   name,
-  year: parseInt(year),
+  year: parseInt(year, 10),
 });
 
 const mapDBSongToModel = ({
@@ -15,10 +15,10 @@ const mapDBSongToModel = ({
 }) => ({
   id,
   title,
-  year: parseInt(year),
+  year: parseInt(year, 10),
   performer,
   genre,
-  duration: parseInt(duration),
+  duration: parseInt(duration, 10),
   albumId,
 });
 
