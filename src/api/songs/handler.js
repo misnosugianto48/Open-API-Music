@@ -92,6 +92,20 @@ class SongsHandler {
       message: 'Song berhasil dihapus',
     };
   }
+
+  async getSongsTitleAndPerformerHandler(request) {
+    const { title = '', performer = '' } = request.query;
+    const songs = await this._service.getSongsTitleAndPerformer(
+      title,
+      performer
+    );
+    return {
+      status: 'success',
+      data: {
+        songs,
+      },
+    };
+  }
 }
 
 module.exports = SongsHandler;
