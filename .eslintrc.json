@@ -13,6 +13,8 @@
         "no-console": "off",
         "no-underscore-dangle":"off",
         "operator-linebreak": "off",
-        "object-curly-newline":"off"
+        "object-curly-newline":"off",
+        "comma-dangle":"off",
+        "implicit-arrow-linebreak":"off"
     }
 }

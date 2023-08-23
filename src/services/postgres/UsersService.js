@@ -85,6 +85,8 @@ class UsersService {
     if (!match) {
       throw new AuthenticationError('Kredensial yang anda berikan salah');
     }
+
+    return id;
   }
 }
 
