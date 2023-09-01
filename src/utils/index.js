@@ -1,7 +1,8 @@
-const mapDBAlbumToModel = ({ id, name, year }) => ({
+const mapDBAlbumToModel = ({ id, name, year, cover }) => ({
   id,
   name,
   year: parseInt(year, 10),
+  cover,
 });
 
 const mapDBSongToModel = ({

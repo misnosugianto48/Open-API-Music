@@ -1,12 +1,11 @@
 const autoBind = require('auto-bind');
 
 class ExportsHandler {
-  constructor(service, validator, playlistsService) {
-    this._service = service;
+  constructor(ProducerService, validator, playlistsService) {
+    this._producerService = ProducerService;
     this._validator = validator;
     this._playlistsService = playlistsService;
 
-    console.log('_playlistsService:', this._playlistsService);
     //  TODO: bind semua nilai sekaligus
     autoBind(this);
   }
@@ -36,7 +35,7 @@ class ExportsHandler {
     };
 
     //  TODO: kirim pesan ke queue
-    await this._service.sendMessage(
+    await this._producerService.sendMessage(
       'export:playlists',
       JSON.stringify(message)
     );
