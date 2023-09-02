@@ -3,10 +3,7 @@ const { Pool } = require('pg');
 const AuthorizationError = require('../../exceptions/AuthorizationError');
 const InvariantError = require('../../exceptions/InvariantError');
 const NotFoundError = require('../../exceptions/NotFoundError');
-const {
-  mapDBPlaylistsToModel,
-  mapDBToModelPlaylistActivities,
-} = require('../../utils');
+const { mapDBPlaylistsToModel } = require('../../utils');
 const { mapDBSongsToModel } = require('../../utils');
 
 class PlaylistsService {
