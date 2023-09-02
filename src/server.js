@@ -2,9 +2,9 @@ require('dotenv').config();
 
 const Hapi = require('@hapi/hapi');
 const Jwt = require('@hapi/jwt');
-const config = require('./utils/config');
-const path = require('path');
 const Inert = require('@hapi/inert');
+const path = require('path');
+const config = require('./utils/config');
 
 // albums
 const albums = require('./api/albums');
@@ -31,6 +31,12 @@ const AuthenticationsValidator = require('./validator/authentications');
 const playlists = require('./api/playlists');
 const PlaylistsService = require('./services/postgres/PlaylistsService');
 const PlaylistValidator = require('./validator/playlists');
+const ActivitiesService = require('./services/postgres/ActivitiesService');
+
+// collaborations
+const collaborations = require('./api/collaborations');
+const CollaborationsService = require('./services/postgres/CollaborationsService');
+const CollaborationsValidator = require('./validator/collaborations');
 
 // exports
 const _exports = require('./api/exports');
@@ -47,7 +53,9 @@ const init = async () => {
   const songsService = new SongsService();
   const usersService = new UsersService();
   const authenticationsService = new AuthenticationsService();
-  const playlistsService = new PlaylistsService();
+  const collaborationsService = new CollaborationsService();
+  const activitiesService = new ActivitiesService();
+  const playlistsService = new PlaylistsService(collaborationsService);
   const storageService = new StorageService(
     path.resolve(__dirname, 'api/albums/images')
   );
@@ -125,8 +133,18 @@ const init = async () => {
     {
       plugin: playlists,
       options: {
-        service: playlistsService,
+        playlistsService,
+        activitiesService,
         validator: PlaylistValidator,
+      },
+    },
+    {
+      plugin: collaborations,
+      options: {
+        collaborationsService,
+        playlistsService,
+        usersService,
+        validator: CollaborationsValidator,
       },
     },
     {

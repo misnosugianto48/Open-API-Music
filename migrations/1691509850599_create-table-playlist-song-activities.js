@@ -21,40 +21,44 @@ exports.up = (pgm) => {
       notNull: true,
     },
     action: {
-      type: 'VARCHAR(50)',
+      type: 'VARCHAR(10)',
       notNull: true,
     },
     time: {
-      type: 'TIMESTAMP', // Corrected the data type name
-      notNull: true,
+      type: 'TEXT',
     },
   });
 
   pgm.addConstraint(
     'playlist_song_activities',
-    'unique_playlist_id_and_song_id_and_user_id',
-    'UNIQUE(playlist_id, song_id, user_id)'
-  );
-
-  pgm.addConstraint(
-    'playlist_song_activities',
-    'fk_playlist_song_activities.playlist_id_playlists.id',
+    'fk-playlist_song_activities.playlist_id-playlists.id',
     'FOREIGN KEY(playlist_id) REFERENCES playlists(id) ON DELETE CASCADE'
   );
-
   pgm.addConstraint(
     'playlist_song_activities',
-    'fk_playlist_song_activities.song_id_songs.id',
+    'fk-playlist_song_activities.song_id-songs.id',
     'FOREIGN KEY(song_id) REFERENCES songs(id) ON DELETE CASCADE'
   );
-
   pgm.addConstraint(
     'playlist_song_activities',
-    'fk_playlist_song_activities.user_id_users.id',
+    'fk-playlist_song_activities.user_id-users.id',
     'FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE'
   );
 };
 
 exports.down = (pgm) => {
   pgm.dropTable('playlist_song_activities');
+
+  pgm.dropConstraint(
+    'playlist_song_activities',
+    'fk-playlist_song_activities.playlist_id-playlists.id'
+  );
+  pgm.dropConstraint(
+    'playlist_song_activities',
+    'fk-playlist_song_activities.song_id-songs.id'
+  );
+  pgm.dropConstraint(
+    'playlist_song_activities',
+    'fk-playlist_song_activities.user_id-users.id'
+  );
 };

@@ -3,12 +3,16 @@ const { Pool } = require('pg');
 const AuthorizationError = require('../../exceptions/AuthorizationError');
 const InvariantError = require('../../exceptions/InvariantError');
 const NotFoundError = require('../../exceptions/NotFoundError');
-const { mapDBPlaylistsToModel } = require('../../utils');
+const {
+  mapDBPlaylistsToModel,
+  mapDBToModelPlaylistActivities,
+} = require('../../utils');
 const { mapDBSongsToModel } = require('../../utils');
 
 class PlaylistsService {
-  constructor() {
+  constructor(collaborationService) {
     this._pool = new Pool();
+    this._collaborationService = collaborationService;
   }
 
   async addPlaylist({ name, owner }) {
@@ -30,7 +34,7 @@ class PlaylistsService {
 
   async getPlaylists(owner) {
     const query = {
-      text: 'SELECT playlists.id, playlists.name, users.username FROM playlists LEFT JOIN users ON users.id = playlists.owner WHERE playlists.owner = $1',
+      text: 'SELECT playlists.id, playlists.name, users.username FROM playlists LEFT JOIN collaborations ON collaborations.playlist_id = playlists.id LEFT JOIN users ON users.id = playlists.owner WHERE playlists.owner = $1 OR collaborations.user_id = $1 GROUP BY playlists.id, users.username',
       values: [owner],
     };
 
@@ -38,10 +42,10 @@ class PlaylistsService {
     return result.rows.map(mapDBPlaylistsToModel);
   }
 
-  async getPlaylistById(owner, id) {
+  async getPlaylistById(id) {
     const query = {
-      text: 'SELECT playlists.id, playlists.name, users.username FROM playlists LEFT JOIN users ON users.id = playlists.owner WHERE playlists.owner = $1 AND playlists.id = $2',
-      values: [owner, id],
+      text: 'SELECT playlists.id, playlists.name, users.username FROM playlists LEFT JOIN users ON playlists.owner = users.id LEFT JOIN collaborations ON playlists.id = collaborations.playlist_id WHERE playlists.id = $1',
+      values: [id],
     };
 
     const result = await this._pool.query(query);
@@ -82,7 +86,7 @@ class PlaylistsService {
 
   async getSongFromPlaylistById(playlistId) {
     const query = {
-      text: 'SELECT songs.id, songs.title, songs.performer FROM songs LEFT JOIN playlistsongs ON songs.id = playlistsongs.song_id LEFT JOIN playlists ON playlistsongs.playlist_id = playlists.id WHERE playlistsongs.playlist_id = $1',
+      text: 'SELECT songs.id, songs.title, songs.performer FROM songs LEFT JOIN playlistsongs ON songs.id = playlistsongs.song_id WHERE playlistsongs.playlist_id = $1',
       values: [playlistId],
     };
 
@@ -136,6 +140,22 @@ class PlaylistsService {
     }
 
     return result.rows.map(mapDBSongsToModel);
+  }
+
+  async verifyPlaylistAccess(playlistId, owner) {
+    try {
+      await this.verifyPlaylistOwner(playlistId, owner);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw error;
+      }
+
+      try {
+        await this._collaborationService.verifyCollaborator(playlistId, owner);
+      } catch (error) {
+        throw error;
+      }
+    }
   }
 }
 

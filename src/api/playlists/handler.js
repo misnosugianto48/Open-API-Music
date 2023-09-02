@@ -1,8 +1,11 @@
 const autoBind = require('auto-bind');
+const NotFoundError = require('../../exceptions/NotFoundError');
+const AuthorizationError = require('../../exceptions/AuthorizationError');
 
 class PlaylistHandler {
-  constructor(service, validator) {
-    this._service = service;
+  constructor(playlistsService, activitiesService, validator) {
+    this._playlistsService = playlistsService;
+    this._activitiesService = activitiesService;
     this._validator = validator;
 
     //  TODO: bind semua nilai sekaligus
@@ -14,7 +17,7 @@ class PlaylistHandler {
     const { name } = request.payload;
     const { id: credentialId } = request.auth.credentials;
 
-    const playlistId = await this._service.addPlaylist({
+    const playlistId = await this._playlistsService.addPlaylist({
       name,
       owner: credentialId,
     });
@@ -32,7 +35,7 @@ class PlaylistHandler {
 
   async getPlaylistHandler(request) {
     const { id: credentialId } = request.auth.credentials;
-    const playlists = await this._service.getPlaylists(credentialId);
+    const playlists = await this._playlistsService.getPlaylists(credentialId);
 
     return {
       status: 'success',
@@ -46,8 +49,8 @@ class PlaylistHandler {
     const { playlistId } = request.params;
     const { id: credentialId } = request.auth.credentials;
 
-    await this._service.verifyPlaylistOwner(playlistId, credentialId);
-    await this._service.deletePlaylistById(playlistId);
+    await this._playlistsService.verifyPlaylistOwner(playlistId, credentialId);
+    await this._playlistsService.deletePlaylistById(playlistId);
 
     return {
       status: 'success',
@@ -56,14 +59,43 @@ class PlaylistHandler {
   }
 
   async addSongToPlaylistByIdHandler(request, h) {
+    //  TODO: validasi song payload
     this._validator.validateSongPayload(request.payload);
-    const { songId } = request.payload;
+
+    // TODO: validasi request auth dan params
     const { playlistId } = request.params;
+    const { songId } = request.payload;
     const { id: credentialId } = request.auth.credentials;
 
-    await this._service.verifySongPlaylist(songId);
-    await this._service.verifyPlaylistOwner(playlistId, credentialId);
-    await this._service.addSongToPlaylistById(playlistId, songId);
+    //  TODO: verify song exist
+    await this._playlistsService.verifySongPlaylist(songId);
+
+    // TODO: verify access
+    try {
+      // Verifikasi akses ke playlist, dan jika akses tidak diizinkan, kirimkan status kode 403
+      await this._playlistsService.verifyPlaylistAccess(
+        playlistId,
+        credentialId
+      );
+    } catch (error) {
+      return h
+        .response({
+          status: 'fail',
+          message: 'Forbidden: You do not have access to this playlist',
+        })
+        .code(403);
+    }
+
+    await this._playlistsService.addSongToPlaylistById(playlistId, songId);
+
+    // TODO: add activities
+    await this._activitiesService.addPlaylistActivities(
+      playlistId,
+      songId,
+      credentialId,
+      'add'
+    );
+
     const response = h.response({
       status: 'success',
       message: 'Lagu berhasil ditambahkan ke playlist',
@@ -72,24 +104,44 @@ class PlaylistHandler {
     return response;
   }
 
-  async getSongFromPlaylistByIdHandler(request) {
-    // TODO : dapatkan playlistId dari path params
+  async getSongFromPlaylistByIdHandler(request, h) {
     const { playlistId } = request.params;
-
-    // TODO : dapatkan user ter-auth
     const { id: credentialId } = request.auth.credentials;
 
-    // TODO : verifikasi data playlist
-    // TODO : verifikasi user pemilik playlist
-    await this._service.verifyPlaylistOwner(playlistId, credentialId);
+    // TODO: verify access
+    try {
+      // Verifikasi akses ke playlist, dan jika akses tidak diizinkan, kirimkan status kode 403
+      await this._playlistsService.verifyPlaylistAccess(
+        playlistId,
+        credentialId
+      );
+    } catch (error) {
+      // Jika verifikasi akses gagal, cek apakah itu kesalahan playlist tidak ditemukan (404)
+      if (error instanceof NotFoundError) {
+        return h
+          .response({
+            status: 'fail',
+            message: 'Playlist not found',
+          })
+          .code(404);
+      }
 
-    const playlists = await this._service.getPlaylistById(
-      credentialId,
+      // Jika bukan kesalahan playlist tidak ditemukan, kirimkan status kode 403
+      return h
+        .response({
+          status: 'fail',
+          message: 'Forbidden: You do not have access to this playlist',
+        })
+        .code(403);
+    }
+
+    const playlists = await this._playlistsService.getPlaylistById(playlistId);
+
+    const songs = await this._playlistsService.getSongFromPlaylistById(
       playlistId
     );
-    const songs = await this._service.getSongFromPlaylistById(playlistId);
 
-    return {
+    const response = {
       status: 'success',
       data: {
         playlist: {
@@ -98,24 +150,91 @@ class PlaylistHandler {
         },
       },
     };
+
+    return response;
   }
 
-  async deleteSongFromPlaylistByIdHandler(request) {
+  async getPlaylistActivitiesHandler(request, h) {
+    const { playlistId } = request.params;
+    const { id: credentialId } = request.auth.credentials;
+
+    // TODO: verify access
+    try {
+      // Verifikasi akses ke playlist, dan jika akses tidak diizinkan, kirimkan status kode 403
+      await this._playlistsService.verifyPlaylistAccess(
+        playlistId,
+        credentialId
+      );
+    } catch (error) {
+      // Jika verifikasi akses gagal, cek apakah itu kesalahan playlist tidak ditemukan (404)
+      if (error instanceof NotFoundError) {
+        return h
+          .response({
+            status: 'fail',
+            message: 'Playlist not found',
+          })
+          .code(404);
+      }
+
+      // Jika bukan kesalahan playlist tidak ditemukan, kirimkan status kode 403
+      return h
+        .response({
+          status: 'fail',
+          message: 'Forbidden: You do not have access to this playlist',
+        })
+        .code(403);
+    }
+
+    const activities = await this._activitiesService.getPlaylistActivities(
+      playlistId
+    );
+
+    return {
+      status: 'success',
+      data: {
+        playlistId,
+        activities,
+      },
+    };
+  }
+
+  async deleteSongFromPlaylistByIdHandler(request, h) {
     // TODO : dapatkan playlistId dari path params
     const { playlistId } = request.params;
 
-    // TODO : verifikasi song payload
-    await this._validator.validateSongPayload(request.payload);
+    // TODO : verifikasi song
     const { songId } = request.payload;
+    await this._validator.validateSongPayload(request.payload);
 
     // TODO : dapatkan user terautentifikasi
     const { id: credentialId } = request.auth.credentials;
 
-    // TODO : pastikan playlist ada
-    // TODO : verifikasi user playlists
-    await this._service.verifyPlaylistOwner(playlistId, credentialId);
+    // TODO: verify access
+    try {
+      // Verifikasi akses ke playlist, dan jika akses tidak diizinkan, kirimkan status kode 403
+      await this._playlistsService.verifyPlaylistAccess(
+        playlistId,
+        credentialId
+      );
+    } catch (error) {
+      return h
+        .response({
+          status: 'fail',
+          message: 'Forbidden: You do not have access to this playlist',
+        })
+        .code(403);
+    }
 
-    await this._service.deleteSongFromPlaylistById(playlistId, songId);
+    await this._playlistsService.getPlaylistById(credentialId, playlistId);
+
+    await this._playlistsService.deleteSongFromPlaylistById(playlistId, songId);
+    // TODO: add activities
+    await this._activitiesService.addPlaylistActivities(
+      playlistId,
+      songId,
+      credentialId,
+      'delete'
+    );
 
     return {
       status: 'success',

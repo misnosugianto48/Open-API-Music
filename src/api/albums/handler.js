@@ -46,6 +46,8 @@ class AlbumsHandler {
     return response;
   }
 
+  async postAlbumLikesHandler(request, h) {}
+
   async getAlbumByIdHandler(request) {
     const { id } = request.params;
     const album = await this._albumsService.getAlbumById(id);
@@ -66,6 +68,8 @@ class AlbumsHandler {
 
     return response;
   }
+
+  async getAlbumLikesHandler(request) {}
 
   async putAlbumByIdHandler(request) {
     this._validator.validateAlbumPayload(request.payload);
@@ -89,6 +93,8 @@ class AlbumsHandler {
       message: 'ALbum berhasil dihapus',
     };
   }
+
+  async deleteAlbumLikesHandler(request) {}
 }
 
 module.exports = AlbumsHandler;

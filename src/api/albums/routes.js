@@ -9,7 +9,7 @@ const routes = (handler) => [
   {
     method: 'POST',
     path: '/albums/{id}/covers',
-    handler: (request, h) => handler.postUploadCoverAlbumHandler(request, h),
+    handler: handler.postUploadCoverAlbumHandler,
     options: {
       payload: {
         allow: 'multipart/form-data',
@@ -18,6 +18,11 @@ const routes = (handler) => [
         maxBytes: 512000,
       },
     },
+  },
+  {
+    method: 'POST',
+    path: '/albums/{id}/likes',
+    handler: handler.postAlbumLikesHandler,
   },
   {
     method: 'GET',
@@ -34,6 +39,11 @@ const routes = (handler) => [
     },
   },
   {
+    method: 'GET',
+    path: '/albums/{id}/likes',
+    handler: handler.getAlbumLikesHandler,
+  },
+  {
     method: 'PUT',
     path: '/albums/{id}',
     handler: handler.putAlbumByIdHandler,
@@ -42,6 +52,11 @@ const routes = (handler) => [
     method: 'DELETE',
     path: '/albums/{id}',
     handler: handler.deleteAlbumByIdHandler,
+  },
+  {
+    method: 'DELETE',
+    path: '/albums/{id}/likes',
+    handler: handler.deleteAlbumLikesHandler,
   },
 ];
 
