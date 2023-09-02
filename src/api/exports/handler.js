@@ -1,4 +1,5 @@
 const autoBind = require('auto-bind');
+const NotFoundError = require('../../exceptions/NotFoundError');
 
 class ExportsHandler {
   constructor(ProducerService, validator, playlistsService) {
@@ -19,10 +20,35 @@ class ExportsHandler {
     const { id: credentialId } = request.auth.credentials;
     const { targetEmail } = request.payload;
 
-    console.log('playlistId:', playlistId); // Add this line
-    console.log('credentialId:', credentialId); // Add this line
+    console.log('playlistId:', playlistId);
+    console.log('credentialId:', credentialId);
 
-    await this._playlistsService.verifyPlaylistOwner(playlistId, credentialId);
+    // TODO: verify access
+    try {
+      await this._playlistsService.verifyPlaylistAccess(
+        playlistId,
+        credentialId
+      );
+    } catch (error) {
+      // Jika verifikasi akses gagal, cek apabila playlist tidak ditemukan (404)
+      if (error instanceof NotFoundError) {
+        return h
+          .response({
+            status: 'fail',
+            message: 'Playlist not found',
+          })
+          .code(404);
+      }
+
+      // Verifikasi Access, kirimkan status kode 403
+      return h
+        .response({
+          status: 'fail',
+          message: 'Forbidden: Kamu tidak mempunyai akses ke playlist',
+        })
+        .code(403);
+    }
+
     const songs = await this._playlistsService.getSongFromPlaylistById(
       playlistId
     );

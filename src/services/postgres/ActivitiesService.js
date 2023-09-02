@@ -20,7 +20,7 @@ class ActivitiesService {
     const result = await this._pool.query(query);
 
     if (!result.rows[0].id) {
-      throw new InvariantError('Gagal membuat aktivitas');
+      throw new InvariantError('Aktivitas gagal ditambahkan');
     }
   }
 

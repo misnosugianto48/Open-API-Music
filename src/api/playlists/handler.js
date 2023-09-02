@@ -159,27 +159,26 @@ class PlaylistHandler {
 
     // TODO: verify access
     try {
-      // Verifikasi akses ke playlist, dan jika akses tidak diizinkan, kirimkan status kode 403
       await this._playlistsService.verifyPlaylistAccess(
         playlistId,
         credentialId
       );
     } catch (error) {
-      // Jika verifikasi akses gagal, cek apakah itu kesalahan playlist tidak ditemukan (404)
+      // Jika verifikasi akses gagal, cek apabila playlist tidak ditemukan (404)
       if (error instanceof NotFoundError) {
         return h
           .response({
             status: 'fail',
-            message: 'Playlist not found',
+            message: 'Playlist tidak ditemukan',
           })
           .code(404);
       }
 
-      // Jika bukan kesalahan playlist tidak ditemukan, kirimkan status kode 403
+      // kirimkan status kode 403
       return h
         .response({
           status: 'fail',
-          message: 'Forbidden: You do not have access to this playlist',
+          message: 'Forbidden: Kamu tidak mempunyai akses ke playlist',
         })
         .code(403);
     }
@@ -210,7 +209,6 @@ class PlaylistHandler {
 
     // TODO: verify access
     try {
-      // Verifikasi akses ke playlist, dan jika akses tidak diizinkan, kirimkan status kode 403
       await this._playlistsService.verifyPlaylistAccess(
         playlistId,
         credentialId
@@ -219,7 +217,7 @@ class PlaylistHandler {
       return h
         .response({
           status: 'fail',
-          message: 'Forbidden: You do not have access to this playlist',
+          message: 'Forbidden: Kamu tidak mempunyai akses ke playlist',
         })
         .code(403);
     }

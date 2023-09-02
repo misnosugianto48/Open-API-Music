@@ -46,7 +46,44 @@ class AlbumsHandler {
     return response;
   }
 
-  async postAlbumLikesHandler(request, h) {}
+  async postAlbumLikesHandler(request, h) {
+    try {
+      const { id: albumId } = request.params;
+      const { id: credentialId } = request.auth.credentials;
+
+      await this._albumsService.getAlbumById(albumId);
+
+      const isLiked = await this._albumsService.isAlbumAlreadyLikes(
+        credentialId,
+        albumId
+      );
+
+      if (isLiked) {
+        const response = h.response({
+          status: 'fail',
+          message: 'Album sudah dilikes',
+        });
+        response.code(400);
+        return response;
+      }
+
+      await this._albumsService.addAlbumLike(credentialId, albumId);
+
+      const response = h.response({
+        status: 'success',
+        message: 'Album berhasil dilikes',
+      });
+      response.code(201);
+      return response;
+    } catch (error) {
+      const response = h.response({
+        status: 'fail',
+        message: error.message || 'Internal server error',
+      });
+      response.code(404);
+      return response;
+    }
+  }
 
   async getAlbumByIdHandler(request) {
     const { id } = request.params;
@@ -69,7 +106,26 @@ class AlbumsHandler {
     return response;
   }
 
-  async getAlbumLikesHandler(request) {}
+  async getAlbumLikesHandler(request, h) {
+    const { id } = request.params;
+
+    const { likes, isCached } = await this._albumsService.getAlbumLikes(id);
+
+    const response = h.response({
+      status: 'success',
+      data: {
+        likes,
+      },
+    });
+
+    response.code(200);
+
+    if (isCached) {
+      response.header('X-Data-Source', 'cache');
+    }
+
+    return response;
+  }
 
   async putAlbumByIdHandler(request) {
     this._validator.validateAlbumPayload(request.payload);
@@ -80,7 +136,7 @@ class AlbumsHandler {
 
     return {
       status: 'success',
-      message: 'ALbum berhasil diperbarui',
+      message: 'ALbum berhasil diperbaharui',
     };
   }
 
@@ -94,7 +150,43 @@ class AlbumsHandler {
     };
   }
 
-  async deleteAlbumLikesHandler(request) {}
+  async deleteAlbumLikesHandler(request, h) {
+    try {
+      const { id: albumId } = request.params;
+      const { id: credentialId } = request.auth.credentials;
+
+      await this._albumsService.getAlbumById(albumId);
+
+      const isLiked = await this._albumsService.isAlbumAlreadyLikes(
+        credentialId,
+        albumId
+      );
+
+      if (!isLiked) {
+        const response = h.response({
+          status: 'fail',
+          message: 'Likes tidak ditemukan',
+        });
+        response.code(404);
+        return response;
+      }
+
+      await this._albumsService.deleteAlbumLike(credentialId, albumId);
+
+      const response = h.response({
+        status: 'success',
+        message: 'Likes berhasil dihapus',
+      });
+      return response;
+    } catch (error) {
+      const response = h.response({
+        status: 'error',
+        message: error.message || 'Internal server error',
+      });
+      response.code(500);
+      return response;
+    }
+  }
 }
 
 module.exports = AlbumsHandler;
