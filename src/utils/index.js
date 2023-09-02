@@ -1,7 +1,8 @@
-const mapDBAlbumToModel = ({ id, name, year }) => ({
+const mapDBAlbumToModel = ({ id, name, year, cover }) => ({
   id,
   name,
   year: parseInt(year, 10),
+  cover,
 });
 
 const mapDBSongToModel = ({
@@ -34,9 +35,17 @@ const mapDBPlaylistsToModel = ({ id, name, username }) => ({
   username,
 });
 
+const mapDBToModelPlaylistActivities = ({ username, title, action, time }) => ({
+  username,
+  title,
+  action,
+  time,
+});
+
 module.exports = {
   mapDBAlbumToModel,
   mapDBSongToModel,
   mapDBSongsToModel,
   mapDBPlaylistsToModel,
+  mapDBToModelPlaylistActivities,
 };
